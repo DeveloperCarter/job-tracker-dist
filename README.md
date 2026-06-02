@@ -11,15 +11,27 @@ agent (Claude Code, Codex CLI, …) drives the tailoring.
 
 ## Quick start (Windows)
 
-1. **Open PowerShell** in this folder.
-2. **Run the bootstrap:**
-   ```powershell
-   ./bootstrap.ps1
-   ```
-   It checks for prerequisites (Docker + a small toolchain), shows you exactly
-   what it would install, asks for confirmation, installs via `winget`, loads the
-   app images, and starts everything.
-3. When it's done, open **http://localhost:8088**.
+**Easiest — one line, nothing preinstalled.** Open PowerShell and run:
+
+```powershell
+irm https://raw.githubusercontent.com/DeveloperCarter/job-tracker-dist/main/install.ps1 | iex
+```
+
+This installs Git + Git LFS if you don't have them, downloads the app, and starts
+it. (Git LFS is required — the app images are stored with it.) When it finishes,
+open **http://localhost:8088**.
+
+**Already have Git + Git LFS?** Clone and bootstrap manually instead:
+
+```powershell
+git clone https://github.com/DeveloperCarter/job-tracker-dist
+cd job-tracker-dist
+./bootstrap.ps1
+```
+
+`bootstrap.ps1` checks for prerequisites (Docker + a small toolchain), shows you
+exactly what it would install, asks for confirmation, installs via `winget`,
+loads the app images, and starts everything. Then open **http://localhost:8088**.
 
 That's it for running the app. To actually *tailor* resumes, do the two setup
 steps below.
