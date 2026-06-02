@@ -1,0 +1,72 @@
+# Job Search Tracker — packaged deployment (Full Docker Compose).
+#
+# This file is copied verbatim into dist/ as docker-compose.yml. It references
+# PREBUILT images (no source / no build: context) that the bootstrap loads from
+# dist/images/*.tar. postgres:17 is pulled from Docker Hub on first run.
+#
+# Start:  docker compose up -d         (the bootstrap does this for you)
+# Stop:   docker compose down          (data is preserved in the named volume)
+# Open:   http://localhost:8088        (or http://<your-tailscale-name>:8088)
+
+# A distinct project name so this packaged stack never collides with a separate
+# development copy. Containers are named jobsearch-tracker-<service>-1 and the
+# data volume is project-scoped (jobsearch-tracker_jobsearch-pgdata) — fully
+# isolated from any other stack on the machine.
+name: jobsearch-tracker
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: jobsearch
+      POSTGRES_USER: jobsearch
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-jobsearch}
+    volumes:
+      - jobsearch-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobsearch -d jobsearch"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    image: jobsearch-backend:local
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/jobsearch
+      DB_USER: jobsearch
+      DB_PASSWORD: ${DB_PASSWORD:-jobsearch}
+      # The workspace (resumes, JDs, generated docs) is bind-mounted below. The
+      # backend serves files from here, and your AI agent writes files into the
+      # very same folder on the host — that shared mount is what makes document
+      # preview/download work. See AGENTS.md.
+      WORKSPACE_ROOT: /workspace
+      # Optional integration secrets (mail scan, etc.). Missing file is fine —
+      # the import is optional and all those features default OFF.
+      TRACKER_SECRETS_FILE: /secrets/secrets.properties
+    volumes:
+      - ./workspace:/workspace
+      - ./secrets:/secrets:ro
+    ports:
+      # Exposed for the host-side workflow CLI (app/scripts/tracker.mjs) and
+      # health checks. The browser uses the web service (8088), not this port.
+      # Host port is overridable (bootstrap auto-picks a free one if 8080 is busy).
+      - "${BACKEND_PORT:-8080}:8080"
+    restart: unless-stopped
+
+  web:
+    image: jobsearch-web:local
+    depends_on:
+      - backend
+    ports:
+      # The app's single front door. Bind on all interfaces so a phone/iPad can
+      # reach it over Tailscale at http://<tailscale-name>:8088.
+      # Host port is overridable (bootstrap auto-picks a free one if 8088 is busy).
+      - "${WEB_PORT:-8088}:80"
+    restart: unless-stopped
+
+volumes:
+  jobsearch-pgdata:

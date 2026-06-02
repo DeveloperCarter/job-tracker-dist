@@ -1,0 +1,38 @@
+PROPRIETARY SOFTWARE LICENSE AND END-USER AGREEMENT
+
+Copyright (c) 2026 {{COPYRIGHT_HOLDER}}. All rights reserved.
+
+1. GRANT. The copyright holder ("Licensor") grants you ("Recipient") a personal,
+   non-exclusive, non-transferable, revocable license to install and run this
+   software ("the Software") on machines you control, solely for your own
+   personal job-search use.
+
+2. RESTRICTIONS. You may NOT, in whole or in part:
+   (a) redistribute, publish, sublicense, sell, rent, lease, or otherwise make
+       the Software available to any third party;
+   (b) decompile, disassemble, reverse engineer, or otherwise attempt to derive
+       the source code of the compiled application images, except to the limited
+       extent this restriction is prohibited by applicable law;
+   (c) remove or alter any proprietary notices; or
+   (d) use the Software to build or train a competing product or service.
+
+   This license covers the compiled application (the backend image, the frontend
+   bundle, and accompanying scripts). Configuration files, documentation, and the
+   workflow content you author (resumes, notes, logs) are yours.
+
+3. NO WARRANTY. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+
+4. LIMITATION OF LIABILITY. IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY
+   CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR
+   OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR ITS USE.
+
+5. THIRD-PARTY COMPONENTS. The Software runs on and alongside third-party
+   software (e.g. PostgreSQL, nginx, the JRE, Docker images, npm/Maven
+   dependencies) that remain under their own respective licenses.
+
+6. TERMINATION. This license terminates automatically if you breach it. On
+   termination you must stop using and delete all copies of the Software.
+
+By installing or running the Software, you agree to these terms.
