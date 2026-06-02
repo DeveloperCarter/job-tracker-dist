@@ -2,7 +2,7 @@
 .SYNOPSIS
     One-step installer for the Job Search Tracker (recipient side).
     Ensures Git + Git LFS are present, clones the distribution repo, and starts
-    the app — i.e. it wraps:
+    the app - i.e. it wraps:
 
         git clone <repo>
         cd <repo>
@@ -10,7 +10,7 @@
 
 .DESCRIPTION
     This is the very first thing your friend runs. They don't need anything
-    installed beforehand — this script:
+    installed beforehand - this script:
       1. Makes sure Git is installed (installs it via winget if missing).
       2. Makes sure Git LFS is installed and initialized. This is REQUIRED:
          the app's Docker images ship through LFS, so a plain `git clone`
@@ -67,14 +67,14 @@ function Install-WithWinget([string]$id, [string]$label) {
         Die "winget (Windows Package Manager) isn't available, so $label can't be auto-installed. Install $label manually, then re-run."
     }
     Step "Installing $label (winget id: $id)"
-    Info 'A Windows UAC prompt may appear — that is expected.'
+    Info 'A Windows UAC prompt may appear - that is expected.'
     winget install --id $id -e --source winget --accept-source-agreements --accept-package-agreements
     # winget exit codes vary; verify by capability rather than trusting the code.
     Update-PathFromEnvironment
 }
 
 Write-Host '====================================================================' -ForegroundColor Cyan
-Write-Host ' Job Search Tracker — installer' -ForegroundColor Cyan
+Write-Host ' Job Search Tracker - installer' -ForegroundColor Cyan
 Write-Host '====================================================================' -ForegroundColor Cyan
 
 # ---- 1. ensure Git -----------------------------------------------------------
@@ -82,7 +82,7 @@ Step 'Checking for Git'
 if (Test-Cmd 'git') {
     Ok "Git present ($((git --version)))"
 } else {
-    Warn 'Git not found — installing.'
+    Warn 'Git not found - installing.'
     Install-WithWinget 'Git.Git' 'Git'
     if (-not (Test-Cmd 'git')) {
         Die 'Git still not found after install. Close this window, open a NEW PowerShell, and run the installer again.'
@@ -96,7 +96,7 @@ Step 'Checking for Git LFS'
 if ($LASTEXITCODE -eq 0) {
     Ok "Git LFS present ($((git lfs version)))"
 } else {
-    Warn 'Git LFS not found — installing (the app images need it).'
+    Warn 'Git LFS not found - installing (the app images need it).'
     Install-WithWinget 'GitHub.GitLFS' 'Git LFS'
     & git lfs version *> $null
     if ($LASTEXITCODE -ne 0) {
@@ -112,14 +112,14 @@ $target = Join-Path (Get-Location) $Dir
 if (Test-Path (Join-Path $target '.git')) {
     Step "Updating existing clone ($Dir)"
     git -C $target pull --ff-only
-    if ($LASTEXITCODE -ne 0) { Warn 'Could not fast-forward — using the existing checkout as-is.' }
+    if ($LASTEXITCODE -ne 0) { Warn 'Could not fast-forward - using the existing checkout as-is.' }
     git -C $target lfs pull
 } elseif (Test-Path $target) {
     Die "'$target' exists but isn't a git checkout. Move/rename it, then re-run."
 } else {
     Step "Cloning $RepoUrl"
     git clone $RepoUrl $target
-    if ($LASTEXITCODE -ne 0) { Die 'git clone failed — check your internet connection and the repo URL.' }
+    if ($LASTEXITCODE -ne 0) { Die 'git clone failed - check your internet connection and the repo URL.' }
     Ok "cloned into $target"
 }
 

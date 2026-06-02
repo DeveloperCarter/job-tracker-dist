@@ -9,7 +9,7 @@
     (the Postgres volume and your workspace files are untouched). Start again
     anytime with ./bootstrap.ps1 (or: docker compose up -d).
 
-    Flags (destructive — each prompts before acting):
+    Flags (destructive - each prompts before acting):
       -Volumes   also delete the database volume (your tracked postings/status).
                  Your workspace/ files on disk are NOT touched.
       -Images    also remove the app's Docker images (frees disk; bootstrap or
@@ -45,7 +45,7 @@ function Confirm-Destructive([string]$prompt) {
 }
 
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-    Warn 'Docker is not installed — nothing to tear down.'
+    Warn 'Docker is not installed - nothing to tear down.'
     exit 0
 }
 
@@ -58,7 +58,7 @@ $AppImages = @('jobsearch-backend:local', 'jobsearch-web:local')
 # ---- confirm destructive choices up front ------------------------------------
 $dropVolumes = $false
 if ($Volumes) {
-    Warn 'You asked to DELETE the database volume — this erases your tracked'
+    Warn 'You asked to DELETE the database volume - this erases your tracked'
     Warn 'postings, statuses and history. Your workspace/ files stay on disk.'
     if (Confirm-Destructive 'Permanently delete the tracked data?') { $dropVolumes = $true }
     else { Info 'Keeping the data volume.' }
@@ -71,7 +71,7 @@ if ($dropVolumes) {
 } else {
     docker compose @composeArgs down
 }
-if ($LASTEXITCODE -ne 0) { Warn 'docker compose down reported an error — see output above.' }
+if ($LASTEXITCODE -ne 0) { Warn 'docker compose down reported an error - see output above.' }
 else { Ok 'app stopped' }
 
 # ---- optionally remove images ------------------------------------------------

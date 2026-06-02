@@ -9,7 +9,7 @@
       1. Check what's already installed.
       2. Show you EXACTLY what it would install, and ask before doing anything.
       3. Install missing prerequisites via winget (each may raise a Windows UAC
-         elevation prompt — that's the consented install).
+         elevation prompt - that's the consented install).
       4. Optionally install + explain Tailscale (only if you opt in).
       5. Load the prebuilt Docker images and run `docker compose up`.
       6. Open the app at http://localhost:8088.
@@ -57,14 +57,14 @@ $Prereqs = @(
 if ($Update) {
     Step 'Updating to the latest published build (git pull)'
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-        Warn 'git is not installed yet — skipping update. (It will be offered below.)'
+        Warn 'git is not installed yet - skipping update. (It will be offered below.)'
     } else {
         git -C $Here rev-parse --is-inside-work-tree *> $null
         if ($LASTEXITCODE -ne 0) {
-            Warn 'This folder is not a git checkout — nothing to pull. Continuing with what is here.'
+            Warn 'This folder is not a git checkout - nothing to pull. Continuing with what is here.'
         } else {
             git -C $Here pull --ff-only
-            if ($LASTEXITCODE -ne 0) { Warn 'git pull could not fast-forward — continuing with the current build.' }
+            if ($LASTEXITCODE -ne 0) { Warn 'git pull could not fast-forward - continuing with the current build.' }
             else { Ok 'pulled the latest published build' }
         }
     }
@@ -104,7 +104,7 @@ if ($missing.Count -gt 0) {
         foreach ($p in $missing) {
             Step ("Installing {0}" -f $p.Name)
             winget install --id $p.Id -e --source winget --accept-package-agreements --accept-source-agreements
-            if ($LASTEXITCODE -ne 0) { Warn ("winget returned $LASTEXITCODE for {0} — you may need to install it manually." -f $p.Name) }
+            if ($LASTEXITCODE -ne 0) { Warn ("winget returned $LASTEXITCODE for {0} - you may need to install it manually." -f $p.Name) }
             else { Ok ("installed {0}" -f $p.Name) }
         }
         Warn 'If Docker Desktop was just installed, Windows may need a REBOOT (and WSL2 enabled) before Docker can run.'
@@ -116,10 +116,10 @@ else { Ok 'all prerequisites already present' }
 if ($NoTailscale) {
     Info 'Skipping the Tailscale step (-NoTailscale).'
 } else {
-Step 'Tailscale (optional) — reach the tracker from your phone/iPad'
+Step 'Tailscale (optional) - reach the tracker from your phone/iPad'
 Info 'Tailscale is a free, secure private network. Install it on your PC and phone,'
 Info 'sign in to the same account on both, and your phone can open this app at'
-Info 'http://<your-pc-name>.ts.net:8088 from anywhere — nothing exposed publicly.'
+Info 'http://<your-pc-name>.ts.net:8088 from anywhere - nothing exposed publicly.'
 $tsInstalled = [bool](Get-Command tailscale -ErrorAction SilentlyContinue)
 if ($tsInstalled) { Ok 'Tailscale already installed.' }
 else {
@@ -132,7 +132,7 @@ else {
             Info 'Next: launch Tailscale, sign in, install the Tailscale app on your phone with the'
             Info 'same account, then browse to  http://<your-pc-name>.ts.net:8088  on the phone.'
             Info 'Find your PC name with:  tailscale status'
-        } else { Warn 'Tailscale install did not complete — see https://tailscale.com/download' }
+        } else { Warn 'Tailscale install did not complete - see https://tailscale.com/download' }
     } else { Info 'Skipped. You can install it later from https://tailscale.com/download' }
 }
 }
@@ -197,8 +197,8 @@ if ($WebPort -gt 0 -and $BackendPort -gt 0) {
     $BackendPort = Get-FreePort 8080
     if ($BackendPort -eq $WebPort) { $BackendPort = Get-FreePort ($WebPort + 1) }
     if ($WebPort -eq 0 -or $BackendPort -eq 0) { Warn 'Could not find free host ports near 8088 / 8080.'; exit 1 }
-    if ($WebPort -ne 8088)     { Warn ("Port 8088 is busy — using {0} for the app instead." -f $WebPort) }
-    if ($BackendPort -ne 8080) { Warn ("Port 8080 is busy — using {0} for the API instead." -f $BackendPort) }
+    if ($WebPort -ne 8088)     { Warn ("Port 8088 is busy - using {0} for the app instead." -f $WebPort) }
+    if ($BackendPort -ne 8080) { Warn ("Port 8080 is busy - using {0} for the API instead." -f $BackendPort) }
     @("WEB_PORT=$WebPort", "BACKEND_PORT=$BackendPort") | Set-Content -LiteralPath $EnvFile -Encoding ascii
 }
 $AppUrl = "http://localhost:$WebPort"
@@ -209,10 +209,10 @@ Ok ("web -> {0}   |   api -> http://localhost:{1}" -f $AppUrl, $BackendPort)
 # uniquely-named containers and volume, so it never collides with a separate dev
 # copy. Start ONLY the database first, so we can read its Flyway history before the
 # backend tries to migrate: a volume left over from a NEWER build would make the
-# packaged (older) backend's Flyway refuse to start — caught below with a clear note.
+# packaged (older) backend's Flyway refuse to start - caught below with a clear note.
 Step 'Starting the database'
 docker compose --env-file $EnvFile -f $ComposeFile up -d postgres
-if ($LASTEXITCODE -ne 0) { Warn 'docker compose up (postgres) failed — see output above.'; exit 1 }
+if ($LASTEXITCODE -ne 0) { Warn 'docker compose up (postgres) failed - see output above.'; exit 1 }
 
 # Resolve the actual container id from compose (name is project-scoped, not fixed).
 $DbCid = (docker compose -f $ComposeFile ps -q postgres 2>$null | Select-Object -First 1)
@@ -238,12 +238,12 @@ $dbVer = 0
 if ($LASTEXITCODE -eq 0 -and $dbVerRaw) { [void][int]::TryParse(($dbVerRaw | Out-String).Trim(), [ref]$dbVer) }
 
 if ($null -eq $expected) {
-    Info 'No schema.version shipped with this package — skipping schema check.'
+    Info 'No schema.version shipped with this package - skipping schema check.'
 } elseif ($dbVer -eq 0) {
-    Ok ("Fresh database — the app will create schema v{0} on first start." -f $expected)
+    Ok ("Fresh database - the app will create schema v{0} on first start." -f $expected)
 } elseif ($dbVer -gt $expected) {
     Warn ("Existing data is at schema v{0}, but this package only understands v{1}." -f $dbVer, $expected)
-    Warn 'This is an OLDER package than the data — starting it could fail or risk your data.'
+    Warn 'This is an OLDER package than the data - starting it could fail or risk your data.'
     Info 'Use a newer package, or reset the data with:  docker compose down -v  (deletes tracked data).'
     $ans = (Read-Host 'Start the app anyway? [y/N]').Trim().ToLower()
     if ($ans -ne 'y' -and $ans -ne 'yes') { Warn 'Stopped. No app containers were started.'; exit 1 }
@@ -256,7 +256,7 @@ if ($null -eq $expected) {
 # ---- bring up the rest of the stack ------------------------------------------
 Step 'Starting the app (docker compose up -d)'
 docker compose --env-file $EnvFile -f $ComposeFile up -d
-if ($LASTEXITCODE -ne 0) { Warn 'docker compose up failed — see output above.'; exit 1 }
+if ($LASTEXITCODE -ne 0) { Warn 'docker compose up failed - see output above.'; exit 1 }
 
 Step 'Waiting for the app to answer'
 $up = $false
@@ -264,7 +264,7 @@ for ($i = 0; $i -lt 40; $i++) {
     Start-Sleep 3
     try { if ((Invoke-WebRequest "$AppUrl" -UseBasicParsing -TimeoutSec 3).StatusCode -eq 200) { $up = $true; break } } catch {}
 }
-if ($up) { Ok "App is up at $AppUrl" } else { Warn "App didn't answer yet — give it a minute, then open $AppUrl (check: docker compose logs -f backend)" }
+if ($up) { Ok "App is up at $AppUrl" } else { Warn "App didn't answer yet - give it a minute, then open $AppUrl (check: docker compose logs -f backend)" }
 
 if (-not $NoBrowser) { Start-Process $AppUrl }
 

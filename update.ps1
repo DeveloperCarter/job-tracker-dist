@@ -6,11 +6,11 @@
     Run from the deploy folder:  ./update.ps1
 
     This assumes the deploy folder is a CLONE of your distribution repo (the one
-    holding docker-compose.yml + images/*.tar + these scripts — compiled
+    holding docker-compose.yml + images/*.tar + these scripts - compiled
     artifacts only, no source). It will:
       1. git pull the latest published artifacts (fast-forward only).
       2. Reload the refreshed app images (docker load).
-      3. Recreate the containers (docker compose up -d) — your data volume is kept.
+      3. Recreate the containers (docker compose up -d) - your data volume is kept.
       4. Wait for the app to answer and report the URL.
 
     Newer images may carry newer database migrations; the backend's Flyway runs
@@ -83,13 +83,13 @@ if (Test-Path $ImagesDir) {
     }
     Ok 'images loaded'
 } else {
-    Warn "No images/ folder at $ImagesDir — recreating with whatever images are present."
+    Warn "No images/ folder at $ImagesDir - recreating with whatever images are present."
 }
 
 # ---- 4. recreate the stack ---------------------------------------------------
 Step 'Redeploying (docker compose up -d)'
 docker compose @composeArgs up -d
-if ($LASTEXITCODE -ne 0) { Warn 'docker compose up failed — see output above.'; exit 1 }
+if ($LASTEXITCODE -ne 0) { Warn 'docker compose up failed - see output above.'; exit 1 }
 
 if ($Prune) {
     Step 'Pruning dangling images'
@@ -112,7 +112,7 @@ for ($i = 0; $i -lt 40; $i++) {
     try { if ((Invoke-WebRequest "$AppUrl" -UseBasicParsing -TimeoutSec 3).StatusCode -eq 200) { $up = $true; break } } catch {}
 }
 if ($up) { Ok "Updated and running at $AppUrl" }
-else { Warn "App didn't answer yet — give it a minute, then open $AppUrl (check: docker compose logs -f backend)" }
+else { Warn "App didn't answer yet - give it a minute, then open $AppUrl (check: docker compose logs -f backend)" }
 
 if (-not $NoBrowser -and $up) { Start-Process $AppUrl }
 
