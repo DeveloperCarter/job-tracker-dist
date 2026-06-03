@@ -16,7 +16,7 @@ Re-read OPERATIONS.md before each major pass (resume, cover letter, final packag
 ## Tools to use
 
 - **Word documents (`.docx`)** — use the `docx` skill. Do not write ad-hoc python-docx scripts. The skill handles copying templates, editing in place, preserving formatting, tightening spacing/margins for one-page fit, and page-count verification.
-- **PDFs** — use the `pdf` skill for the final submission conversion.
+- **PDFs** — use the tracker UI's **Finalize** button for final submission conversion. It converts signed-off `.docx` files to PDFs through the backend and registers the resulting PDF versions in the DB.
 - **Opening files for visual review** — use `Start-Process` via PowerShell so Word / the default PDF viewer launches. Ask before opening if a previous open prompt was denied. **If {{CANDIDATE_NAME}} says he is on a remote-control / mobile session, do not open files** — paste the full document content as plaintext in chat for review instead.
 
 ## Hard rules (full version in OPERATIONS.md)
@@ -24,7 +24,8 @@ Re-read OPERATIONS.md before each major pass (resume, cover letter, final packag
 - Always provide a role-match rating out of 10 **before** generating documents. Do not proceed below 7.0 without explicit approval.
 - Truthful alignment over keyword stuffing. Never invent employers, titles, dates, metrics, certifications, or tools.
 - One-page resume when practical. Tighten margins/spacing before cutting content.
-- No AI tells: generic enthusiasm, vague claims, inflated adjectives, repetitive structure. Sound like {{CANDIDATE_NAME}} — direct, practical, technically credible.
+- No AI tells: generic enthusiasm, vague claims, inflated adjectives, repetitive structure. Sound like {{CANDIDATE_NAME}}: direct, practical, technically credible.
+- **No long dashes (em `—` / en `–`) anywhere in generated content** (resumes, cover letters, question answers, etc.). Use commas, periods, colons, or parentheses. Plain hyphens in compound words are fine. (Full rule in OPERATIONS.md.)
 - Filename prefixes for final/archive: `1_` resume, `2_` cover letter.
 
 ## Slash commands

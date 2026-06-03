@@ -50,6 +50,7 @@ Do not proceed to generation for roles below 7.0 without explicit approval.
 - Never invent employers, titles, dates, metrics, certifications, or tools.
 - If a requirement is not met, do not imply experience — leave it out and call it out in the rating.
 - Remove AI tells: generic enthusiasm, vague claims, repetitive sentence structure, inflated adjectives, phrasing that doesn't sound like a real person.
+- **Never use long dashes (em dash `—` or en dash `–`) in any generated content** (resumes, cover letters, screening-question answers, etc.). Rewrite with a comma, period, colon, or parentheses instead. Regular hyphens in compound words (e.g. `post-sale`, `on-premise`) are fine. This is a hard, recurring rule: em dashes read as an AI tell and {{CANDIDATE_NAME}} does not want them anywhere in application materials.
 
 ## Resume Output Requirements
 
@@ -100,10 +101,11 @@ Cross-check the document against the saved JD. This is an application-specific c
 
 ## Final Submission Package
 
-- Create `final/{Company}/` and convert the signed-off `.docx` files to PDF using the `pdf` skill.
-- Naming:
+- **PDF conversion is done in the tracker UI, not by the agent.** Open the posting, **Preview** the `.docx` to review it, then click **Finalize** — the app converts the signed-off `.docx` to PDF (LibreOffice on the backend), writes it to `final/{Company}/` with the naming below, and registers it as a new doc version. The agent no longer runs the `pdf` skill for this step.
+- Naming (produced by the Finalize button):
   - `1_{{CANDIDATE_NAME}} - {Company} {Role} Resume.pdf`
   - `2_{{CANDIDATE_NAME}} - {Company} {Role} Cover Letter.pdf`
+- The agent's remaining packaging role is the bookkeeping below (archive, log, seen-roles refresh) plus flipping the card to `Applied`. The Finalize button does **not** change status or touch markdown.
 - Keep the source `.docx` files in `resumes/` and `cover-letters/` — do not move them.
 - Verify PDFs created successfully. If {{CANDIDATE_NAME}} is at the workstation, open for visual review; if on a remote-control / mobile session, skip opening and confirm the file paths in chat.
 - Archive generation files into `archive/{Company}/` using `1_` / `2_` prefixes for the resume and cover letter `.docx`:

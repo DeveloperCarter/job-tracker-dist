@@ -10,9 +10,11 @@
       2. Show you EXACTLY what it would install, and ask before doing anything.
       3. Install missing prerequisites via winget (each may raise a Windows UAC
          elevation prompt - that's the consented install).
-      4. Optionally install + explain Tailscale (only if you opt in).
-      5. Load the prebuilt Docker images and run `docker compose up`.
-      6. Open the app at http://localhost:8088.
+      4. Ensure Docker's WSL2 backend is enabled (and flag BIOS virtualization).
+         If WSL2 was just turned on, it asks you to reboot and re-run.
+      5. Optionally install + explain Tailscale (only if you opt in).
+      6. Load the prebuilt Docker images and run `docker compose up`.
+      7. Open the app at http://localhost:8088.
 
     Nothing is installed silently. Re-running is safe (it skips what's present).
 #>
@@ -40,6 +42,24 @@ function Info($m) { Write-Host "    $m" -ForegroundColor Gray }
 function Test-Soffice {
     if (Get-Command soffice -ErrorAction SilentlyContinue) { return $true }
     return (Test-Path 'C:\Program Files\LibreOffice\program\soffice.exe')
+}
+
+# Is this PowerShell session elevated? (wsl --install needs admin rights.)
+function Test-Admin {
+    $id = [Security.Principal.WindowsIdentity]::GetCurrent()
+    return (New-Object Security.Principal.WindowsPrincipal($id)).IsInRole(
+        [Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+# InstallState 1 = enabled. Win32_OptionalFeature is queryable WITHOUT elevation
+# (unlike DISM / Get-WindowsOptionalFeature). Returns $true/$false, or $null if
+# the feature can't be queried (don't block on an unknown).
+function Test-WindowsFeature($name) {
+    try {
+        $f = Get-CimInstance -ClassName Win32_OptionalFeature -Filter "Name='$name'" -ErrorAction Stop
+        if (-not $f) { return $false }
+        return ($f.InstallState -eq 1)
+    } catch { return $null }
 }
 
 $Prereqs = @(
@@ -111,6 +131,77 @@ if ($missing.Count -gt 0) {
     }
 }
 else { Ok 'all prerequisites already present' }
+
+# ---- virtualization + WSL2 backend (Docker Desktop requirement) --------------
+# Docker Desktop runs its engine inside a lightweight VM via the WSL2 backend,
+# which needs (a) CPU virtualization enabled in firmware and (b) the WSL2 /
+# Virtual Machine Platform Windows features. The "Virtualization support not
+# detected" error at Docker startup means one of these is missing. A script can
+# enable the Windows features (with elevation); it CANNOT flip a BIOS setting.
+Step 'Checking virtualization + WSL2 (Docker Desktop backend)'
+
+# (a) Firmware virtualization. HypervisorPresent=true means a hypervisor is
+# already running (so virtualization is on). Only warn when both say "off".
+$cpuVirt = $null
+$hyperv  = $null
+try { $cpuVirt = (Get-CimInstance Win32_Processor -ErrorAction Stop | Select-Object -First 1).VirtualizationFirmwareEnabled } catch {}
+try { $hyperv  = (Get-CimInstance Win32_ComputerSystem -ErrorAction Stop).HypervisorPresent } catch {}
+if ($cpuVirt -eq $false -and $hyperv -ne $true) {
+    Warn 'CPU virtualization appears DISABLED in firmware (BIOS/UEFI).'
+    Warn 'Docker Desktop cannot start without it. Reboot into BIOS/UEFI, enable'
+    Warn 'Intel VT-x  (or AMD SVM / AMD-V), save, then re-run this script.'
+    Warn 'Tip: Task Manager > Performance > CPU shows Virtualization: Enabled/Disabled.'
+}
+
+# (b) WSL2 / Virtual Machine Platform features.
+$vmp = Test-WindowsFeature 'VirtualMachinePlatform'
+$wsl = Test-WindowsFeature 'Microsoft-Windows-Subsystem-Linux'
+if ($vmp -eq $true -and $wsl -eq $true) {
+    Ok 'WSL2 backend features enabled.'
+} elseif ($vmp -eq $null -or $wsl -eq $null) {
+    Info 'Could not query Windows features - skipping the WSL2 enable.'
+    Info 'If Docker reports "Virtualization support not detected", run (as admin):'
+    Info '    wsl --install --no-distribution    then reboot.'
+} else {
+    Warn 'The WSL2 backend is not fully enabled yet - Docker Desktop needs it.'
+    $go = $Yes
+    if (-not $go) {
+        $ans = (Read-Host 'Enable WSL2 now via "wsl --install --no-distribution"? [y/N]').Trim().ToLower()
+        $go = ($ans -eq 'y' -or $ans -eq 'yes')
+    }
+    if ($go) {
+        Step 'Enabling WSL2 (wsl --install --no-distribution)'
+        # --no-distribution installs the WSL2 kernel + enables the platform WITHOUT
+        # pulling a Linux distro (so there's no interactive username/password prompt).
+        # It needs admin; self-elevate if this session isn't already elevated.
+        $wslOk = $false
+        try {
+            if (Test-Admin) {
+                wsl.exe --install --no-distribution
+                $wslOk = ($LASTEXITCODE -eq 0)
+            } else {
+                Info 'Requesting administrator rights for the WSL2 install...'
+                $p = Start-Process -FilePath 'wsl.exe' -ArgumentList '--install','--no-distribution' `
+                        -Verb RunAs -Wait -PassThru
+                $wslOk = ($p.ExitCode -eq 0)
+            }
+        } catch {
+            Warn ("Could not launch the elevated WSL install: {0}" -f $_.Exception.Message)
+        }
+        if ($wslOk) {
+            Ok 'WSL2 enabled.'
+            Warn 'A REBOOT is required before Docker Desktop can use it.'
+            Warn 'Reboot Windows, then re-run this script to finish setup.'
+            exit 0
+        } else {
+            Warn 'WSL2 enable did not complete. Open an ADMIN PowerShell and run:'
+            Warn '    wsl --install --no-distribution'
+            Warn 'then reboot and re-run this script.'
+        }
+    } else {
+        Warn 'Skipped. Docker Desktop will likely fail to start until WSL2 is enabled.'
+    }
+}
 
 # ---- optional: Tailscale -----------------------------------------------------
 if ($NoTailscale) {

@@ -17,11 +17,13 @@ Final submission packaging for the company the user names. Follow OPERATIONS.md 
 
    Report findings. If non-trivial changes are needed, pause for approval before editing.
 
-3. **Create PDFs** using the `pdf` skill in `final/{Company}/`:
+3. **Confirm the final PDFs exist.** PDF conversion now happens in the tracker UI: {{CANDIDATE_NAME}} opens the posting, **Preview**s the `.docx`, and clicks **Finalize**, which converts it (LibreOffice on the backend) into `final/{Company}/` and registers it in the DB. Do **not** run the `pdf` skill. Verify the files exist:
    - `1_{{CANDIDATE_NAME}} - {Company} {Role} Resume.pdf`
    - `2_{{CANDIDATE_NAME}} - {Company} {Role} Cover Letter.pdf`
 
-4. **Open** the final PDFs for visual review (`Start-Process`).
+   If either is missing, ask {{CANDIDATE_NAME}} to click **Finalize** on that doc in the app (don't convert them yourself).
+
+4. (Already reviewed in-app via the Preview button — no separate open needed.)
 
 5. **Archive** generation files into `archive/{Company}/`:
    - Saved job description
@@ -48,7 +50,7 @@ Final submission packaging for the company the user names. Follow OPERATIONS.md 
      --status "Applied" --date-applied {YYYY-MM-DD}
    ```
 
-   b. Step 6 deletes the working `.docx` files, so register the **final PDFs** as the current documents (paths relative to the workspace root) — this is what the tracker UI previews. Use the posting id from step a:
+   b. The **Finalize** button already registered the final PDFs as new doc versions in the DB (newest wins in the UI), so you normally do **not** need to add them again. Only if a PDF exists on disk but isn't showing in the app (e.g. it was produced outside the button), register it:
 
    ```
    node "app/scripts/tracker.mjs" add-resume --posting {N} \
@@ -58,4 +60,4 @@ Final submission packaging for the company the user names. Follow OPERATIONS.md 
      --path "final/{Company}/2_{{CANDIDATE_NAME}} - {Company} {Role} Cover Letter.pdf"
    ```
 
-   These create new resume/cover-letter versions (newest wins in the UI) pointing at the archived final PDFs. Status transitions are recorded in `status_history` automatically.
+   Status transitions are recorded in `status_history` automatically.
