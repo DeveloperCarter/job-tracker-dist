@@ -322,11 +322,23 @@ Ok 'Database ready'
 Step 'Checking schema version'
 $expected = $null
 if (Test-Path $SchemaFile) { $expected = [int]((Get-Content -LiteralPath $SchemaFile -Raw).Trim()) }
-# Read the highest applied migration; empty/absent table => fresh DB.
-$dbVerRaw = docker exec $DbCid psql -U jobsearch -d jobsearch -tAc `
-    "select coalesce(max(version::numeric),0) from flyway_schema_history where success" 2>$null
+# Read the highest applied migration. On a FRESH database the flyway_schema_history
+# table does not exist yet (the backend creates it on its first migration), so guard
+# with to_regclass() - the query returns 0 instead of raising "relation does not
+# exist". Wrap the call so a native nonzero exit / stderr cannot abort the script
+# under $ErrorActionPreference='Stop' (PowerShell 7 can turn native stderr into a
+# terminating error otherwise).
 $dbVer = 0
-if ($LASTEXITCODE -eq 0 -and $dbVerRaw) { [void][int]::TryParse(($dbVerRaw | Out-String).Trim(), [ref]$dbVer) }
+$schemaSql = "select case when to_regclass('public.flyway_schema_history') is null then 0 else coalesce((select max(version::numeric) from flyway_schema_history where success), 0) end"
+try {
+    $prevEAP = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    $dbVerRaw = docker exec $DbCid psql -U jobsearch -d jobsearch -tAc $schemaSql 2>$null
+    $ErrorActionPreference = $prevEAP
+    if ($LASTEXITCODE -eq 0 -and $dbVerRaw) { [void][int]::TryParse(($dbVerRaw | Out-String).Trim(), [ref]$dbVer) }
+} catch {
+    $dbVer = 0
+}
 
 if ($null -eq $expected) {
     Info 'No schema.version shipped with this package - skipping schema check.'
