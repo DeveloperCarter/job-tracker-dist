@@ -36,13 +36,7 @@ Final submission packaging for the company the user names. Follow OPERATIONS.md 
 
 6. **Clean up**: after verifying the archive contents, delete the tailored `.docx` files from `resumes/` and `cover-letters/`. The archive is the source of truth.
 
-7. **Update the log**: in `source/applications-log.md`, flip the matching company+role row's status to `Applied`. If no matching row exists, append one with today's date and source `direct`.
-
-8. **Refresh the Chrome sourcing prompt's seen-roles block**. Open `source/chrome-job-sourcing-prompt.md`, locate the `<!-- SEEN ROLES START -->` and `<!-- SEEN ROLES END -->` markers, and replace the content between them with a fresh list from `source/applications-log.md`. Format: one bullet per row as `- {Company} — {Role} ({Status})`. Keep the markers intact.
-
-9. **Mirror into the tracker DB** (dual-write — markdown above stays the source of truth). Preflight with `node "app/scripts/tracker.mjs" health`; if it exits non-zero, skip DB sync, keep the markdown updates, and tell {{CANDIDATE_NAME}} "tracker DB offline — markdown updated, DB sync skipped." If healthy:
-
-   a. Flip the posting to `Applied` and stamp today's applied date in one call (it prints `{"id":N,...}` — keep that id for step b):
+7. **Update the tracker DB (source of truth).** Preflight `node "app/scripts/tracker.mjs" health`; if it's down, skip persistence and tell {{CANDIDATE_NAME}} "tracker DB offline — start the stack (`app/runserver.ps1`) and rerun steps 7-8." Do **not** hand-edit the snapshots. If healthy, flip the posting to `Applied` and stamp today's applied date (prints `{"id":N,...}` — keep the id):
 
    ```
    node "app/scripts/tracker.mjs" upsert \
@@ -50,7 +44,7 @@ Final submission packaging for the company the user names. Follow OPERATIONS.md 
      --status "Applied" --date-applied {YYYY-MM-DD}
    ```
 
-   b. The **Finalize** button already registered the final PDFs as new doc versions in the DB (newest wins in the UI), so you normally do **not** need to add them again. Only if a PDF exists on disk but isn't showing in the app (e.g. it was produced outside the button), register it:
+   The **Finalize** button already registered the final PDFs as new doc versions (newest wins in the UI), so you normally do **not** re-add them. Only if a PDF exists on disk but isn't showing in the app (produced outside the button), register it:
 
    ```
    node "app/scripts/tracker.mjs" add-resume --posting {N} \
@@ -58,6 +52,13 @@ Final submission packaging for the company the user names. Follow OPERATIONS.md 
      --template {A|B|C} --pages 1
    node "app/scripts/tracker.mjs" add-cover --posting {N} \
      --path "final/{Company}/2_{{CANDIDATE_NAME}} - {Company} {Role} Cover Letter.pdf"
+   ```
+
+8. **Refresh the generated snapshots** from the DB (no hand-editing):
+
+   ```
+   node "app/scripts/tracker.mjs" export-log
+   node "app/scripts/tracker.mjs" seen-roles
    ```
 
    Status transitions are recorded in `status_history` automatically.

@@ -39,6 +39,9 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/jobsearch
       DB_USER: jobsearch
       DB_PASSWORD: ${DB_PASSWORD:-jobsearch}
+      # Listen on the container network for the web container, while the host
+      # port publish below is loopback-only.
+      SERVER_ADDRESS: 0.0.0.0
       # The workspace (resumes, JDs, generated docs) is bind-mounted below. The
       # backend serves files from here, and your AI agent writes files into the
       # very same folder on the host — that shared mount is what makes document
@@ -47,6 +50,19 @@ services:
       # Optional integration secrets (mail scan, etc.). Missing file is fine —
       # the import is optional and all those features default OFF.
       TRACKER_SECRETS_FILE: /secrets/secrets.properties
+      # Agent launching (triage/tailor from the UI, incl. from your phone) is a
+      # host-side operation the container cannot do itself, so it delegates to the
+      # host-agent-helper running natively on this machine. Start the helper with
+      # `app/runserver.ps1 -Action start -Scope helper`; it prints AGENT_HELPER_TOKEN
+      # into app/.agent-helper-token. Put that same value in a `.env` next to this
+      # compose file (AGENT_HELPER_TOKEN=...). If unset, agent features simply
+      # degrade to unavailable on the prod stack — nothing else breaks.
+      APP_AGENT_RUNNER: host-helper
+      APP_AGENT_HELPER_URL: http://host.docker.internal:8765
+      APP_AGENT_HELPER_TOKEN: ${AGENT_HELPER_TOKEN:-}
+    extra_hosts:
+      # Let the container reach the host-agent-helper on the host.
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./workspace:/workspace
       - ./secrets:/secrets:ro
@@ -54,7 +70,7 @@ services:
       # Exposed for the host-side workflow CLI (app/scripts/tracker.mjs) and
       # health checks. The browser uses the web service (8088), not this port.
       # Host port is overridable (bootstrap auto-picks a free one if 8080 is busy).
-      - "${BACKEND_PORT:-8080}:8080"
+      - "127.0.0.1:${BACKEND_PORT:-8080}:8080"
     restart: unless-stopped
 
   web:

@@ -39,15 +39,27 @@ Thresholds:
 
 Do not proceed to generation for roles below 7.0 without explicit approval.
 
+**Knockouts.** At triage, extract the hard ATS gates as structured posting fields (`tracker.mjs set-knockouts`): degree required and whether an "or equivalent experience" clause appears, a hard years-of-experience gate, residency / onsite / work-authorization, security clearance, mandatory certifications. When a hard knockout has no equivalency clause and {{CANDIDATE_NAME}} cannot meet it, cap the recommendation at Borderline regardless of the fit score, and say why. A years gate alone never forces a Skip (stretch roles stay), but it informs the cap.
+
 ## Tailoring Approach
 
 - Truthful alignment, not keyword stuffing.
 - Use the JD's language only when it accurately describes {{CANDIDATE_NAME}}'s experience.
 - Prioritize the top third of the resume for the strongest role match.
+- **Requirement-driven bullet order.** After the requirement-to-evidence map is validated, order the experience bullets so the top 3 bullets answer the top 3 requirements (by priority), and each of those bullets' first clause speaks to its requirement. Reordering is free (no truthfulness risk) and is the highest-leverage edit; do it every pass unless the template order already satisfies it.
+- **Bullet-pool selection.** Choose the 7-8 visible bullets from the archetype's full approved pool (the template's fixed 8 plus the swappable pool in `TEMPLATES.md`, all grounded in the evidence library), per JD. The template's fixed set is a starting point, not a ceiling. Keep 8 bullets, one page.
+- **Rewrite budget.** For every `direct` requirement whose mapped bullet does not lead with it, rewrite the lead clause (the family `coreClaim`/`verifiedOutcomes` stay immutable). Floor by depth: `light` 0-1 substantive bullet edits, `standard` at least 2, `deep` more. Record the actual count on the posting (`set-strategy --rewrites`).
+- **Domain translation is a required pre-sign-off step, not a cleanup afterthought.** List every domain-specific term in the draft (healthcare, medical codes, HL7, FHIR, clinical, EHR, terminology) and either justify each against the JD or replace it with a domain-neutral equivalent. No-op for healthcare-vertical JDs (Template C).
+- **Adversarial skim review before sign-off.** After the draft, a fresh reviewer with no tailoring context sees only the JD plus the extracted resume text and answers: what does the first third say this person is, would a recruiter for this exact req shortlist them in 6 seconds, and the single highest-leverage change. Address or consciously dismiss its top finding before sign-off. This replaces author self-review as the gate.
+- Before editing, identify the five most important hiring criteria and map each to confirmed evidence, its intended resume location, and direct/adjacent/unsupported confidence. Store these as **structured requirement rows** on the posting (`tracker.mjs set-requirements`), not just free text; triage may have already seeded them as `suggested` for you to validate.
+- Draw evidence from `source/resume-evidence-library.yaml` (the verified evidence families). Each family's `coreClaim` and `verifiedOutcomes` are immutable; use a `variant` as emphasis guidance only and write a natural final bullet. Honor every `prohibitedClaims` entry. Record the `evidenceFamilyIds` used per requirement.
+- Count a criterion as clearly covered only when its evidence appears in the summary or experience bullets. A skills-list mention alone does not count. Target at least 3 of the top 5 covered.
+- For each `direct` requirement, set `matchTerms` (literal strings present in the finished resume). Finalize-time QA fails a resume if a direct requirement's terms are missing from the extracted PDF text.
 - Strengthen existing bullets before adding new claims.
 - Concise, high-signal bullets over longer explanations.
 - Employer names, dates, titles, awards, metrics, and education stay accurate.
 - Never invent employers, titles, dates, metrics, certifications, or tools.
+- **Never name a specific client / customer account** in any externally-shared material (resume, cover letter, LinkedIn, screening answers). Describe accounts generically ("the company's two largest enterprise healthcare accounts," "a top-tier enterprise healthcare account") while keeping every metric, outcome, and scope figure exactly as verified. Real names stay internal-only in `candidate-considerations.md` (decided 2026-07-07); they must never flow into an evidence-library `templateBullet`, a resume, or any other shared document.
 - If a requirement is not met, do not imply experience — leave it out and call it out in the rating.
 - Remove AI tells: generic enthusiasm, vague claims, repetitive sentence structure, inflated adjectives, phrasing that doesn't sound like a real person.
 - **Never use long dashes (em dash `—` or en dash `–`) in any generated content** (resumes, cover letters, screening-question answers, etc.). Rewrite with a comma, period, colon, or parentheses instead. Regular hyphens in compound words (e.g. `post-sale`, `on-premise`) are fine. This is a hard, recurring rule: em dashes read as an AI tell and {{CANDIDATE_NAME}} does not want them anywhere in application materials.
@@ -71,6 +83,8 @@ Do not proceed to generation for roles below 7.0 without explicit approval.
 
 ## Cover Letter Requirements
 
+- **Selective, not automatic.** Decide a cover-letter strategy per application and record it (`set-strategy --cover-strategy`): `none` (default; a strong tailored resume plus outreach beats a boilerplate letter), `required` (the posting/form mandates one), `transition` (the SE-pivot narrative needs explaining), `motivation` (a genuine company/mission reason the resume can't carry), or `outreach` (the letter doubles as a note to a named contact). Only write one when the strategy is not `none`.
+- When one is written, {{CANDIDATE_NAME}} must edit at least one sentence before it is finalized (a 100% agent-written letter is a tell).
 - Standard industry length, format, and formality. One page unless asked otherwise.
 - Professional business-letter structure: contact details, date, company/hiring team, greeting, concise opening, 2–3 focused body paragraphs, concise closing, signature.
 - Write like an intelligent human. No AI indicators, no generic filler, no inflated phrasing, no buzzword polish.
@@ -98,6 +112,7 @@ Cross-check the document against the saved JD. This is an application-specific c
 - For each keyword or technical detail, ask: *"Would a hiring manager for this exact role care about this?"* If not, remove or demote.
 - Resume and cover letter should reinforce the same strongest story without repeating sentences.
 - Call out remaining gaps honestly in the fit rating; do not hide them with vague language.
+- **Automated finalize QA (deterministic backstop, not a replacement for the above):** when a resume `.docx` is finalized to PDF (the Finalize button / `/package`), the backend extracts the PDF text and flags: more than one page, any em/en dash, empty bullets, suspiciously low word count, and any `direct` requirement whose `matchTerms` are absent. The verdict (pass / warn / fail) and findings show on the resume row in the posting drawer. Resolve a `fail` before submitting.
 
 ## Final Submission Package
 
@@ -119,7 +134,7 @@ Cross-check the document against the saved JD. This is an application-specific c
 
 ## Tracker App (local web UI)
 
-A local-first web app in `app/` (Spring Boot + React + Postgres) tracks every posting, its status, JD text, role-match notes, and links to the generated docs. It does **not** generate documents — tailoring stays in Claude Code. The markdown files (`source/applications-log.md`, etc.) remain the source of truth; the app is a dual-write mirror until cutover is confirmed.
+A local-first web app in `app/` (Spring Boot + React + Postgres) tracks every posting, its status, JD text, role-match notes, and links to the generated docs. It does **not** generate documents — tailoring stays in Claude Code. The **tracker DB is the source of truth.** `source/applications-log.md` and the Chrome prompt's seen-roles block are now *generated snapshots*: regenerate them from the DB with `node "app/scripts/tracker.mjs" export-log` / `seen-roles` after status changes. Do **not** hand-edit them — the next regen overwrites the data rows.
 
 - **Run it:** `app/runserver.ps1` (double-click or `-Action start`). Interactive menu, or `-Action start|stop|restart|status -Scope full|backend|frontend|db`. Backend `:8080`, frontend `:5173`, Postgres in Docker `:5433`. The in-app **Shut down** button calls the same script.
 - **Inbox intake:** the app's **Add JD** button (and Claude-in-Chrome) drop JDs into the `Inbox` lane. In Claude Code, "triage the inbox" / "tailor posting N" reads the JD from the DB via `app/scripts/tracker.mjs` — no re-paste, no Anthropic API (Claude Code is the compute).
@@ -129,7 +144,15 @@ A local-first web app in `app/` (Spring Boot + React + Postgres) tracks every po
   - **Fit hint** (`Strong`/`Possible`/`Stretch`/`Weak`) — a keyword-overlap *prior* on each kept posting (shown as an Inbox badge, stored in `fit_hint`). A skim aid and triage prior **only — not the role-match rating.** See `/triage` for how to weigh it.
 
   Survivors land in `Inbox`; the keyword lists live in `JobSourcingService` and are sourced from `candidate-considerations.md`.
-- **Dual-write sync:** `/triage`, `/tailor`, `/package` mirror their markdown bookkeeping into the DB via `tracker.mjs` (health-gated; markdown-only fallback if the API is down). See those skills for exact commands.
+- **Permission entries:** `.claude/settings.local.json` accumulates auto-approved `Bash(...)`/`PowerShell(...)` command patterns over time. Avoid baking in absolute paths to this project folder (e.g. hardcoding `C:\Users\carte\...\Codex-JobSearch\...`); the folder has already moved once and every hardcoded-path entry silently went dead when that happened. Prefer relative paths or command-name/glob patterns so entries survive a future move.
+- **DB writes:** `/triage`, `/tailor`, `/package` persist directly to the DB via `tracker.mjs` (health-gated), then regenerate the markdown snapshots with `export-log` / `seen-roles`. If the API is down, persistence is skipped (they say so) and dedupe falls back to reading the snapshot. See those skills for exact commands.
+- **Phase 1 fields (V20):** `/triage` writes structured knockouts via `set-knockouts` (degree + equivalency, years gate, residency, clearance, certifications). `/tailor` records the substantive-edit count (`set-strategy --rewrites`) and the selective cover-letter decision (`set-strategy --cover-strategy none|required|transition|motivation|outreach`). All are additive, nullable posting fields and surface in the posting drawer.
+- **Phase 2 fields (V21) — selection & amplification:**
+  - **Pursuit score (computed, not stored).** A deterministic 0–100 score, separate from the fit/role-match rating: it answers "is this the best use of the next hour?", not "can {{CANDIDATE_NAME}} do the job." `PursuitService` computes it on the fly (so it auto-updates as a posting ages or gains contacts) from **freshness** (days since added/last seen), **comp** (parsed midpoint), **hard knockouts** (a degree gate with no equivalency, a high years gate, clearance, or residency subtracts), **warm-funnel availability** (a recorded referral connection or any attached contact adds), a **strategic-value** nudge, and a **light fit factor** so a weak-fit role can't top the list. Bands: **hot ≥ 70, warm 45–69, cool < 45**. It shows in the posting drawer's Selection section (with the reason breakdown) and drives the Work Queue **Pursue** bucket, which lists not-yet-submitted postings ranked by score; a fresh + hot posting carries a 24h apply-target nudge (age is the timer).
+  - **Human-set inputs.** `set-pursuit --id N [--strategic low|medium|high] [--referral none|searching|connection-1st|connection-2nd|employee-warm|recruiter-known] [--referral-notes "…"]`. The referral hunt result is recorded **even when "none"** so checked-and-empty is distinguishable from unchecked. Editable in the drawer.
+  - **Outreach (draft-only).** Contacts carry `relationship`, `outreach_channel`, `outreach_status` (`none|drafted|sent|replied|no-response`), the drafted note, and a sent timestamp. `/outreach` drafts a short note grounded in the top requirement + strongest direct evidence and stores it via `add-contact` / `set-outreach`; **{{CANDIDATE_NAME}} always sends it himself** (nothing is ever sent on his behalf). The draft and status show in the drawer's Contacts section with a copy button and a "mark sent" action.
+  - **Learning loop.** Registering the first resume for a posting stamps the current template version (Settings > Resume template cohort, default `v1`); later resumes do not rewrite that cohort. Analytics cuts the mature measured cohort by template version, evidence coverage, rewrite count, cover-letter strategy, outreach, posting age, knockout presence, and pursuit band, and reports evidence-family response performance. These cuts are observational only. Run `/retro` monthly to compare a saved snapshot and propose one human-reviewed workflow adjustment.
+- **Agent runner (`launch-agent.ps1`):** each agent launch **auto-updates the selected CLI** first (best-effort, throttled once/day per agent via `app/logs/agents/.cli-update-<agent>`; failures are logged and never block the run). Bypass with `-SkipCliUpdate`. The **agent window's model picker** lists Claude models as floating aliases (`opus`/`sonnet`/`haiku`/`fable`) that auto-track the latest version, each with its own reasoning-effort range, default, cost/speed, and a one-line blurb; Codex models stay auto-detected from the CLI's model cache (which the auto-update keeps current).
 
 ## Review Standard
 

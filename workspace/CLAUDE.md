@@ -8,8 +8,9 @@ Read in this order:
 
 1. [OPERATIONS.md](OPERATIONS.md) — workflow, role-match gate, output requirements, QA pass
 2. [source/candidate-considerations.md](source/candidate-considerations.md) — truthful experience, keywords, known gaps
-3. [source/template-resume/TEMPLATES.md](source/template-resume/TEMPLATES.md) — picks which of the three template baselines to start from (SE Pivot / Platform Engineering / Healthcare)
-4. The chosen template `.docx` in [source/template-resume/](source/template-resume/) — the layout/content baseline
+3. [source/resume-evidence-library.yaml](source/resume-evidence-library.yaml) — verified evidence families (coreClaim + variants + prohibited claims) to map requirements to
+4. [source/template-resume/TEMPLATES.md](source/template-resume/TEMPLATES.md) — picks which of the three template baselines to start from (SE Pivot / Platform Engineering / Healthcare)
+5. The chosen template `.docx` in [source/template-resume/](source/template-resume/) — the layout/content baseline
 
 Re-read OPERATIONS.md before each major pass (resume, cover letter, final package). The rules are strict and easy to drift from.
 
@@ -32,15 +33,16 @@ Re-read OPERATIONS.md before each major pass (resume, cover letter, final packag
 
 - `/triage` — rate a batch of JDs (from the tracker Inbox, a batch file, or paste) and recommend tailor/skip/borderline
 - `/tailor` — full pipeline for a new posting (get JD → role-match → tailored `.docx` resume)
+- `/outreach` — draft a warm-outreach note + run the referral hunt for a posting (draft-only; {{CANDIDATE_NAME}} sends it himself)
 - `/package` — convert signed-off `.docx` resume + cover letter to final PDFs and archive
 
 ## Tracker app (`app/`)
 
-Local web app (Spring Boot + React + Postgres) for tracking postings/status/docs. Tailoring stays here in Claude Code; markdown stays the source of truth (dual-write mirror). Full details in [OPERATIONS.md](OPERATIONS.md#tracker-app-local-web-ui).
+Local web app (Spring Boot + React + Postgres) for tracking postings/status/docs. Tailoring stays here in Claude Code. The **tracker DB is the source of truth**; `source/applications-log.md` and the Chrome prompt's seen-roles block are generated snapshots (regenerate with `tracker.mjs export-log` / `seen-roles` after status changes, never hand-edit). Full details in [OPERATIONS.md](OPERATIONS.md#tracker-app-local-web-ui).
 
 - **Run/stop:** `app/runserver.ps1` (menu, or `-Action start|stop|status -Scope full|backend|frontend|db`).
 - **Inbox flow:** JDs added in the UI (or via Claude-in-Chrome) land in the `Inbox` lane. "Triage the inbox" / "tailor posting N" reads the JD from the DB via `app/scripts/tracker.mjs get --id N` — no paste, no API.
-- Skills sync to the DB best-effort via `tracker.mjs` (health-gated). If the API is down, they keep the markdown updates and say so.
+- Skills read/write the DB via `tracker.mjs` (health-gated). If the API is down, they fall back to the generated markdown snapshot and say so.
 
 ## Folder map
 

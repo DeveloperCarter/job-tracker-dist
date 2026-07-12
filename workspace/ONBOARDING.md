@@ -8,7 +8,7 @@ A Claude Code workspace for tailoring resumes and cover letters per job posting,
 2. Saves it, reads candidate context, gives an honest **role-match rating out of 10** before generating anything
 3. Tailors a `.docx` resume from a template (preserving formatting, one-page when practical)
 4. Optionally drafts a matching cover letter
-5. Converts approved `.docx` files to PDFs, archives generation files, and cleans up the working folders
+5. After approved `.docx` files are converted to PDF via the tracker UI **Finalize** button, archives generation files and cleans up the working folders
 
 ## Workspace layout
 
@@ -35,7 +35,7 @@ archive/{Company}/                   Generation files after finalization
 ## Slash commands
 
 - **`/tailor`** — full pipeline for a new posting: save JD → context read → role-match rating → tailored `.docx` resume → open for review.
-- **`/package`** — convert signed-off `.docx` files to PDFs, archive generation files, delete sources from `resumes/` and `cover-letters/`.
+- **`/package`** — final QA, confirm the tracker UI **Finalize** button produced the PDFs in `final/{Company}/`, archive generation files, flip status to `Applied`, delete sources from `resumes/` and `cover-letters/`.
 
 ## Hard rules
 
@@ -49,7 +49,7 @@ archive/{Company}/                   Generation files after finalization
 ## Tools / skills required
 
 - **`docx` skill** for Word document creation, editing, and text extraction (or Word COM via PowerShell on Windows).
-- **`pdf` skill** for `.docx` → PDF conversion.
+- **PDF conversion** is done by the tracker UI **Finalize** button (LibreOffice on the backend), not the agent.
 - File ops (Read, Write, Edit, Glob, Grep, file move/copy).
 - A way to open `.docx` and `.pdf` files for visual review (`Start-Process` on Windows).
 
